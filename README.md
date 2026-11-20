@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Terra Mia — Ristorante Braceria · sito demo
 
-## Getting Started
+Sito multipagina (IT/EN) con hero 3D per Terra Mia, Agnone (IS).
+Stack: Next.js 15 (App Router) · TypeScript · Tailwind CSS 4 · Three.js + React Three Fiber · GSAP ScrollTrigger · Lucide.
 
-First, run the development server:
+Dati, fonti e punti da verificare: vedi **RESEARCH.md**.
+
+## Avvio
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev        # sviluppo → http://localhost:3000
+npm run build      # build di produzione (tutte le pagine statiche)
+npm start
+npm run lint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Modalità demo
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`demoMode` è attiva di default (`src/config/site.ts`). In demo:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- banner "Demo" e badge **Da confermare** sui dati non verificati;
+- il modulo di prenotazione simula l'invio (nessun dato trasmesso);
+- il sito è `noindex` e `robots.txt` blocca i motori di ricerca;
+- nessun prezzo di sviluppo, nessuna approvazione del ristorante simulata.
 
-## Learn More
+Per la messa online reale: `NEXT_PUBLIC_DEMO_MODE=false` e `NEXT_PUBLIC_SITE_URL=https://dominio-definitivo.it` (vedi `.env.example`).
 
-To learn more about Next.js, take a look at the following resources:
+Hero 3D: si attiva automaticamente su dispositivi adatti; su dispositivi deboli, con *riduci movimento* o senza WebGL mostra un fondo statico.
+Per forzare la scena durante una presentazione: `/?scene=3d` (oppure `/?scene=static`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Struttura
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/config/site.ts         dati del ristorante, orari, valutazioni, demoMode
+src/data/menu.ts           menu (struttura usata anche dall'admin), allergeni UE
+src/data/reviews.ts        sintesi recensioni con fonte
+src/lib/i18n.ts            rotte IT/EN e testi comuni
+src/components/three/      scena 3D della brace (carboni con shader, griglia, carne, fumo, scintille)
+src/components/sections/   le 12 sezioni della homepage (+ footer)
+src/components/pages.tsx   pagine interne
+src/app/(it)/…  src/app/(en)/en/…   rotte italiane e inglesi
+```
 
-## Deploy on Vercel
+## Menu aggiornabile — cosa c'è e cosa manca
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`/admin` (PIN demo: `terramia`) permette di aggiungere/modificare piatti, prezzi, categorie, disponibilità, stagionalità, allergeni e foto.
+**In demo le modifiche si salvano solo nel browser di chi le fa** (localStorage) e si vedono nella pagina Menu di quel dispositivo. Il JSON si può esportare/importare.
+Il PIN è solo una porta di cortesia, **non una protezione reale**.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Per renderlo operativo in produzione (consigliato, costi contenuti):
+
+1. Database Supabase (tabella `menu_items` con la stessa struttura di `MenuItem`) + Storage per le foto.
+2. Login del ristoratore con Supabase Auth (email magic link) e regole RLS: lettura pubblica, scrittura solo utenti autorizzati.
+3. Pagina Menu che legge dal database con revalidate (ISR) o on-demand revalidation al salvataggio.
+
+In alternativa: un CMS headless leggero (Sanity, Decap) con lo stesso schema.
+
+## Prenotazioni
+
+Il modulo distingue **richiesta** e **conferma**: non promette disponibilità.
+- Demo: flusso simulato.
+- Produzione senza backend: apre un'email precompilata verso il ristorante.
+- Consigliato: route API / funzione serverless che invia l'email con un servizio transazionale (es. Resend) + Turnstile anti-spam, oppure integrazione con un gestionale di prenotazione se il ristorante ne adotta uno.
+
+## Da fornire / confermare con il ristorante
+
+Civico esatto, orari e ferie, logo ufficiale, fotografie autorizzate, menu e prezzi correnti, allergeni, provenienze delle carni, carta dei vini, storia del palazzo e del nome, frase dello chef, ragione sociale e P.IVA (privacy/footer), eventuale WhatsApp. Dettagli in RESEARCH.md.
+
+## Deploy
+
+Il progetto è interamente statico: si pubblica su Vercel o Netlify collegando il repository (nessuna configurazione aggiuntiva).
